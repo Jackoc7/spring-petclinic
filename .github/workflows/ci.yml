@@ -27,16 +27,16 @@ jobs:
           <settings>
             <servers>
               <server>
-                <id>central</id>
+                <id>jfrog</id>
                 <username>${{ secrets.JFROG_USERNAME }}</username>
                 <password>${{ secrets.JFROG_API_KEY }}</password>
               </server>
             </servers>
             <mirrors>
               <mirror>
-                <id>central</id>
+                <id>jfrog</id>
                 <name>JFrog Artifactory</name>
-                <url>${{ secrets.JFROG_URL }}/artifactory/maven-central-remote</url>
+                <url>${{ secrets.JFROG_MAVEN_URL }}</url>
                 <mirrorOf>*</mirrorOf>
               </mirror>
             </mirrors>
