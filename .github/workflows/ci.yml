@@ -67,4 +67,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.JFROG_URL }}/docker-local/spring-petclinic:${{ github.sha }}
+          tags: |
+            ${{ secrets.JFROG_URL }}/docker-local/spring-petclinic:${{ github.sha }}
+            ${{ secrets.JFROG_URL }}/docker-local/spring-petclinic:latest
