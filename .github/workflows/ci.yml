@@ -20,6 +20,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: https://${{ secrets.JFROG_URL }}
+          JF_USER: ${{ secrets.JFROG_USERNAME }}
+          JF_PASSWORD: ${{ secrets.JFROG_API_KEY }}
+
       - name: Configure Maven to use JFrog Artifactory
         run: |
           mkdir -p ~/.m2
@@ -70,3 +77,12 @@ jobs:
           tags: |
             ${{ secrets.JFROG_URL }}/docker-local/spring-petclinic:${{ github.sha }}
             ${{ secrets.JFROG_URL }}/docker-local/spring-petclinic:latest
+
+      - name: Publish build info
+        run: |
+          jf rt build-collect-env
+          jf rt build-add-git
+          jf rt build-publish
+
+      - name: Xray quality gate scan
+        run: jf rt build-scan --fail
