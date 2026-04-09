@@ -46,19 +46,3 @@ The app will be available at http://localhost:8080
 ## Running via Docker
 
 Pull the image from JFrog Artifactory:
-
-    docker pull jackctrial.jfrog.io/docker-local/spring-petclinic:<commit-sha>
-
-Run the container:
-
-    docker run -p 8080:8080 jackctrial.jfrog.io/docker-local/spring-petclinic:<commit-sha>
-
-The app will be available at http://localhost:8080
-
-Replace <commit-sha> with the specific image tag from your JFrog Artifactory docker-local repository.
-
-## Security
-
-- All dependencies are proxied through JFrog Artifactory, preventing direct internet access during builds
-- Docker images are stored in JFrog Artifactory and scanned with JFrog Xray for vulnerabilities
-- No credentials are hardcoded — all secrets are managed via GitHub Actions secrets
