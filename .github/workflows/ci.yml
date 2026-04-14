@@ -6,19 +6,23 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  BUILD_NAME: ${{ github.repository }}
+  BUILD_NUMBER: ${{ github.run_number }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '17'
-          distribution: 'temurin'
 
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
@@ -27,10 +31,10 @@ jobs:
           JF_USER: ${{ secrets.JFROG_USERNAME }}
           JF_PASSWORD: ${{ secrets.JFROG_API_KEY }}
 
-      - name: Configure Maven to use JFrog Artifactory
+      - name: Configure Maven for Artifactory
         run: |
           mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml << EOF
+          cat > ~/.m2/settings.xml <<EOF
           <settings>
             <servers>
               <server>
@@ -42,7 +46,6 @@ jobs:
             <mirrors>
               <mirror>
                 <id>jfrog</id>
-                <name>JFrog Artifactory</name>
                 <url>${{ secrets.JFROG_MAVEN_URL }}</url>
                 <mirrorOf>*</mirrorOf>
               </mirror>
@@ -50,26 +53,25 @@ jobs:
           </settings>
           EOF
 
-      - name: Compile
-        run: ./mvnw compile
+      - name: Maven Build
+        run: jf mvn -B clean package -DskipTests
 
-      - name: Test
-        run: ./mvnw test
+      - name: Collect Build Info
+        run: |
+          jf rt build-collect-env $BUILD_NAME $BUILD_NUMBER
+          jf rt build-add-git $BUILD_NAME $BUILD_NUMBER
 
-      - name: Build JAR
-        run: ./mvnw package -DskipTests
-
-      - name: Set up Docker Buildx
+      - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to JFrog Docker registry
+      - name: Docker Login (Artifactory)
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.JFROG_URL }}
           username: ${{ secrets.JFROG_USERNAME }}
           password: ${{ secrets.JFROG_API_KEY }}
 
-      - name: Build and push Docker image
+      - name: Build & Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -78,11 +80,8 @@ jobs:
             ${{ secrets.JFROG_URL }}/docker-local/spring-petclinic:${{ github.sha }}
             ${{ secrets.JFROG_URL }}/docker-local/spring-petclinic:latest
 
-      - name: Publish build info
-        run: |
-          jf rt build-collect-env
-          jf rt build-add-git
-          jf rt build-publish
+      - name: Publish Build Info
+        run: jf rt build-publish $BUILD_NAME $BUILD_NUMBER
 
-      - name: Xray quality gate scan
-        run: jf build-scan --fail
+      - name: Xray Scan
+        run: jf bs $BUILD_NAME $BUILD_NUMBER --fail
