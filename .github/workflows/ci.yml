@@ -85,4 +85,4 @@ jobs:
           jf rt build-publish
 
       - name: Xray quality gate scan
-        run: jf rt build-scan --fail
+        run: jf build-scan --fail
